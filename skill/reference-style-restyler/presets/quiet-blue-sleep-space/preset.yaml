@@ -1,0 +1,85 @@
+schema_version: 1
+id: quiet-blue-sleep-space
+display_name: 白场蓝色功能岛
+version: 2.0.0
+description: 以暖白无边界空间、低饱和雾蓝主家具、小型深色压舱家具和四角文案系统建立安静柔软的功能岛场景。
+aliases:
+  - 安睡空间
+  - 雾蓝安睡
+  - 白场功能岛
+  - 蓝色功能岛
+  - 抱抱云朵社安睡空间
+style_guide: style.md
+supported_inputs:
+  - ecommerce-poster
+  - interior
+  - product-in-interior
+  - person-in-interior
+priority_rules:
+  - 锁定人物、产品和文案内容，重新构建空间、家具、机位和排版。
+  - 以原图中同景深的床、沙发、普通枕头、人物或家具表面为尺度参照，保持产品在新场景中的等效真实大小。
+  - 背景与地面使用暖白或浅灰白并柔和衔接，形成无边界白场。
+  - 低床、圆润沙发或软榻使用低饱和雾蓝色，构成画面唯一的主功能岛。
+  - 使用一件小面积、中等深度的家具作为压舱元素。
+  - 前景由主家具近端、织物、地毯边缘或柔和阴影自然形成。
+  - 文案采用上方主标题与四角信息系统，字体纤细、克制、蓝灰。
+  - 光线明亮柔和、方向感弱，保持低对比和低刺激。
+lock_policy:
+  required: [people, products, text-content]
+  rules:
+    people: 人物身份、面部特征、发型、服装、身体比例以及人与产品的核心互动关系以输入图为准。
+    products: 产品可见结构、轮廓、比例、材质、颜色、文字、标识和部件连接关系以输入图为准；产品相对于同景深床、沙发、普通枕头、人物或家具表面的宽高占比、占用面积、接触位置和遮挡关系保持等效一致。原参照物被替换时，新参照物采用相同现实尺度，不通过放大或缩小产品强化视觉中心。
+    text-content: 输入图中承担传播作用的文案逐字保留；字体、字号、颜色、层级和位置允许重新设计。
+editable_elements:
+  - 原有空间背景与建筑关系
+  - 床、沙发、边几、灯具和其他环境家具
+  - 机位、景别、裁切和主体在画面中的位置
+  - 图形框架、色块、装饰线和图标风格
+  - 文案排版、字体、字号、颜色和层级
+  - 色彩、光线、材质与整体氛围
+composition_policy:
+  mode: rebuild
+  mandatory_method: 白场蓝色功能岛
+  rules:
+    - 以一件低矮雾蓝软体家具建立唯一主功能岛，人物和产品自然进入其使用关系。
+    - 主体集中在画面中下部，上部保留大面积暖白留白。
+    - 使用一件小型深色家具稳定色调，并保持其视觉权重低于主岛。
+    - 前景优先由主家具近端、垂落织物、浅色地毯边缘或柔和阴影构成。
+    - 文案进入白色留白并采用四角信息系统重新建立层级。
+reference_images:
+  - path: references/bedroom-a-walnut-side-table.png
+    role: bedroom-front-three-quarter-walnut-side-table
+    selection_hints: [卧室, 低床, 正面, 左前三分之四, 木质边几, bedroom, bed, walnut]
+  - path: references/bedroom-b-blue-gray-cabinet.png
+    role: bedroom-side-low-angle-blue-gray-cabinet
+    selection_hints: [卧室, 侧面, 低机位, 深灰蓝边柜, 地毯前景, bedroom, side-view, blue-gray]
+  - path: references/bedroom-c-walnut-low-cabinet.png
+    role: bedroom-elevated-three-quarter-walnut-low-cabinet
+    selection_hints: [卧室, 略俯视, 右前三分之四, 胡桃木矮柜, bedroom, elevated, walnut-cabinet]
+  - path: references/living-room-a-walnut-side-table.png
+    role: living-room-front-three-quarter-walnut-side-table
+    selection_hints: [客厅, 沙发, 贵妃位, 前左三分之四, 木质边几, living-room, sofa, walnut]
+  - path: references/living-room-b-blue-gray-cabinet.png
+    role: living-room-side-low-angle-blue-gray-cabinet
+    selection_hints: [客厅, 沙发, 侧面, 低机位, 深灰蓝边柜, living-room, side-view, blue-gray]
+  - path: references/living-room-c-walnut-low-cabinet.png
+    role: living-room-elevated-three-quarter-walnut-low-cabinet
+    selection_hints: [客厅, 弧形沙发, 略俯视, 胡桃木矮柜, living-room, curved-sofa, walnut-cabinet]
+avoid:
+  - 可识别的墙角、门窗、踢脚线和完整装修系统
+  - 蓝色墙面或用环境染色代替蓝色主家具
+  - 与主功能岛重复竞争的大型前景家具
+  - 强烈直射阳光、硬阴影和明显窗格光斑
+  - 高饱和蓝色、纯冷色空间和过度昏暗
+  - 豪宅、酒店、科技空间和复杂样板间陈设
+  - 随机文字、标识、水印或界面元素
+qa:
+  - 暖白背景与浅灰白地面形成无边界白场。
+  - 大型核心家具使用低饱和雾蓝色并形成单一明确的功能岛。
+  - 画面包含一件小面积、略深的压舱家具。
+  - 前景来自主家具或场景原生元素，不形成第二个视觉中心。
+  - 主体集中在中下部，上方保留充足白场留白。
+  - 文案采用克制的四角信息系统和蓝灰色纤细字体。
+  - 光线柔和漫射，材质柔软可触，整体具有安睡、陪伴和低刺激感。
+  - 人物、产品和文案内容保持准确。
+  - 产品相对于至少一个同景深稳定参照物保持与原图一致的真实尺寸感；存在两个可用参照关系时同时核对，关键比例可测量时偏差不超过约 10%。

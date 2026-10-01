@@ -1,0 +1,6 @@
+interface:
+  display_name: "参考图风格改造"
+  short_description: "通过可插拔视觉方案改造图片并保持原图比例与主体关系"
+  default_prompt: "Use $reference-style-restyler to restyle this image with the default preset while preserving its composition and aspect ratio."
+policy:
+  allow_implicit_invocation: true

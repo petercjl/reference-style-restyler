@@ -1,0 +1,46 @@
+{
+  "schema": "portable-skill-adapter",
+  "schema_version": "1.0.0",
+  "platform": "sealseek",
+  "mappings": [
+    {
+      "capability_id": "media.image.inspect",
+      "status": "implemented",
+      "implementation": {
+        "kind": "agent-native-vision",
+        "capability": "advertised image inspection",
+        "discovery": "Resolve the active SealSeek conversation's image inspection ability; use an attachment when the runtime cannot open a local path."
+      },
+      "features": ["local-file-read", "visual-inspection", "original-detail"],
+      "permissions": ["read user-selected input and bundled reference images"],
+      "normalization": "Return visible observations and input identity without changing any file. If original-detail inspection is unavailable, return FEATURE_UNSUPPORTED."
+    },
+    {
+      "capability_id": "media.image.reference-edit",
+      "status": "implemented",
+      "implementation": {
+        "kind": "agent-native-mcp-image-generation",
+        "server": "sealseek-canvas",
+        "tool": "generate_image",
+        "discovery": "Resolve by exact server and native tool identity from the current advertised MCP catalog; inspect the live schema before a paid call."
+      },
+      "features": ["local-edit-target", "multiple-local-references", "reference-role-prompting", "artifact-return"],
+      "permissions": ["user-requested paid image generation", "upload only the user's edit target and the one or two selected bundled references"],
+      "invocation": "Pass one input target plus one or two selected preset references in an explicit ordered set. Name each role in the prompt. Use one output per attempt and only live-schema-supported model, reference and aspect-ratio fields. If the live schema cannot accept the three images or return a usable artifact, stop with FEATURE_UNSUPPORTED; do not drop a reference or switch backend silently.",
+      "normalization": "Return the generated artifact as a local file path or a native media reference that can be saved locally for the exact-size CLI normalization step."
+    },
+    {
+      "capability_id": "command.execute",
+      "status": "implemented",
+      "implementation": {
+        "kind": "stable-cli",
+        "package": "@petercjl/reference-style-restyler",
+        "command": "reference-style-restyler",
+        "discovery": "Resolve the installed CLI from the SealSeek runtime PATH or the installed npm package entry; run doctor --json."
+      },
+      "features": ["working-directory", "exit-code", "stdout-stderr", "node-cli"],
+      "permissions": ["write only the user-selected output and package-managed Skill/cache locations"],
+      "normalization": "Return the CLI JSON result, exit status and any error code."
+    }
+  ]
+}

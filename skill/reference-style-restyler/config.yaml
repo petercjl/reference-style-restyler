@@ -1,0 +1,6 @@
+schema_version: 1
+default_preset: quiet-blue-sleep-space
+output:
+  preserve_input_dimensions: true
+  canvas_mode: cover
+  max_generation_attempts: 2

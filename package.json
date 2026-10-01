@@ -1,0 +1,25 @@
+{
+  "name": "@petercjl/reference-style-restyler",
+  "version": "0.1.0",
+  "description": "Portable preset-based image restyling Skill for Codex and SealSeek",
+  "type": "module",
+  "bin": {
+    "reference-style-restyler": "bin/reference-style-restyler.mjs"
+  },
+  "files": ["bin/", "src/", "skill/", "README.md"],
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check bin/reference-style-restyler.mjs && node --test",
+    "prepack": "npm run check"
+  },
+  "engines": {"node": ">=20"},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/petercjl/reference-style-restyler.git"
+  },
+  "homepage": "https://github.com/petercjl/reference-style-restyler#readme",
+  "license": "UNLICENSED",
+  "publishConfig": {"access": "public", "registry": "https://registry.npmjs.org/"},
+  "keywords": ["agent-skill", "codex", "sealseek", "image-editing", "style-preset"],
+  "dependencies": {"semver": "^7.7.2", "sharp": "0.35.4", "yaml": "^2.8.1"}
+}

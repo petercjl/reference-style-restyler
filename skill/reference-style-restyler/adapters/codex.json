@@ -1,0 +1,37 @@
+{
+  "schema": "portable-skill-adapter",
+  "schema_version": "1.0.0",
+  "platform": "codex",
+  "mappings": [
+    {
+      "capability_id": "media.image.inspect",
+      "status": "tested",
+      "implementation": {"kind": "agent-native", "capability": "view_image"},
+      "features": ["local-file-read", "visual-inspection", "original-detail"],
+      "permissions": ["read access to supplied local files"],
+      "normalization": "Return a rendered image and inspection metadata without modifying the source.",
+      "tested_date": "2026-09-30",
+      "evidence": ["The bundled references and representative edit target were inspected from local paths."]
+    },
+    {
+      "capability_id": "media.image.reference-edit",
+      "status": "tested",
+      "implementation": {"kind": "advertised-skill-and-native-tool", "logical_skill_name": "imagegen", "capability": "image_gen reference editing"},
+      "features": ["local-edit-target", "multiple-local-references", "reference-role-prompting", "artifact-return"],
+      "permissions": ["user-requested image generation"],
+      "normalization": "Return the generated local artifact path plus tool metadata; copy the selected artifact to the requested destination non-destructively.",
+      "tested_date": "2026-09-30",
+      "evidence": ["The built-in image generation route edited a representative 1672x941 bedroom target with the default preset; the final artifact was visually inspected and retained the exact input dimensions."]
+    },
+    {
+      "capability_id": "command.execute",
+      "status": "tested",
+      "implementation": {"kind": "agent-native", "capability": "local command execution"},
+      "features": ["working-directory", "exit-code", "stdout-stderr", "node-cli"],
+      "permissions": ["write access to the chosen output path"],
+      "normalization": "Return exit status and captured process output.",
+      "tested_date": "2026-09-30",
+      "evidence": ["The packaged Node CLI runs preset validation and exact-size canvas normalization with representative success and failure cases."]
+    }
+  ]
+}

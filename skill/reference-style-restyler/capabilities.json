@@ -1,0 +1,37 @@
+{
+  "schema": "portable-skill-capabilities",
+  "schema_version": "1.0.0",
+  "skill": "reference-style-restyler",
+  "target_platforms": ["codex", "sealseek"],
+  "normalized_result_fields": ["ok", "artifacts", "metadata", "task_id", "cost", "warnings"],
+  "standard_errors": ["CAPABILITY_UNAVAILABLE", "FEATURE_UNSUPPORTED", "AUTH_REQUIRED", "PERMISSION_REQUIRED", "PAID_ACTION_NOT_AUTHORIZED", "PROVIDER_FAILURE", "OUTPUT_CONTRACT_FAILED"],
+  "capabilities": [
+    {
+      "id": "media.image.inspect",
+      "purpose": "Inspect local target and reference images before editing and during artifact QA.",
+      "required": true,
+      "required_features": ["local-file-read", "visual-inspection", "original-detail"],
+      "input_fields": ["path", "detail"],
+      "output_fields": ["image", "metadata"],
+      "side_effects": {"external_mutation": false, "may_cost_money": false, "authorization": "none"}
+    },
+    {
+      "id": "media.image.reference-edit",
+      "purpose": "Edit one raster image using local reference images while preserving subject invariants.",
+      "required": true,
+      "required_features": ["local-edit-target", "multiple-local-references", "reference-role-prompting", "artifact-return"],
+      "input_fields": ["edit_target", "style_references", "prompt"],
+      "output_fields": ["artifact", "metadata"],
+      "side_effects": {"external_mutation": true, "may_cost_money": true, "authorization": "user-requested-image-edit"}
+    },
+    {
+      "id": "command.execute",
+      "purpose": "Discover and validate presets and normalize the generated canvas.",
+      "required": true,
+      "required_features": ["working-directory", "exit-code", "stdout-stderr", "node-cli"],
+      "input_fields": ["command", "working_directory"],
+      "output_fields": ["exit_code", "stdout", "stderr"],
+      "side_effects": {"external_mutation": true, "may_cost_money": false, "authorization": "command-specific"}
+    }
+  ]
+}
