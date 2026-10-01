@@ -15,6 +15,7 @@
   "scripts": {
     "test": "node --test",
     "check": "node --check bin/reference-style-restyler.mjs && node --test",
+    "postinstall": "node bin/postinstall.mjs",
     "prepack": "npm run check"
   },
   "engines": {

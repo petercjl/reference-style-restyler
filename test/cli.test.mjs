@@ -8,6 +8,7 @@ import { presetList, presetShow, presetValidate } from "../src/presets.mjs";
 import { matchCanvas } from "../src/canvas.mjs";
 import { skillInstall, skillStatus, skillRefreshManaged } from "../src/skill-manager.mjs";
 import { checkUpdate } from "../src/update.mjs";
+import { installSkillsAfterGlobalNpmInstall } from "../src/install-lifecycle.mjs";
 
 test("default preset and all six reference images validate", async () => {
   const rows = await presetList();
@@ -75,4 +76,40 @@ test("registry check detects a newer stable version without installing", async (
     const cached = await checkUpdate({ cache: path.join(dir, "update.json"), fetchImpl: async () => { throw new Error("should use cache"); } });
     assert.equal(cached.cached, true);
   } finally { await fs.rm(dir, { recursive: true, force: true }); }
+});
+
+test("global npm install connects an existing SealSeek root and preserves an unmanaged Codex Skill", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "restyler-postinstall-"));
+  const codex = path.join(home, ".codex", "skills", "reference-style-restyler");
+  const sealseek = path.join(home, ".sealseek", "workspace", "skills", "reference-style-restyler");
+  try {
+    await fs.mkdir(codex, { recursive: true });
+    await fs.mkdir(path.join(home, ".sealseek"));
+    await fs.writeFile(path.join(codex, "SKILL.md"), "user-owned\n", { flag: "wx" });
+    const local = await installSkillsAfterGlobalNpmInstall({ global: false, home, env: {} });
+    assert.equal(local.skipped, "not-global-install");
+    await assert.rejects(fs.access(sealseek));
+    const installed = await installSkillsAfterGlobalNpmInstall({ global: true, home, env: {}, mode: "copy" });
+    assert.equal(installed.ok, true);
+    assert.equal(installed.targets.find(item => item.agent === "codex").skipped, "unmanaged-skill");
+    assert.equal(installed.targets.find(item => item.agent === "sealseek").current, true);
+    assert.equal(await fs.readFile(path.join(codex, "SKILL.md"), "utf8"), "user-owned\n");
+    assert.equal((await skillStatus("sealseek", { home, env: {} })).targets[0].current, true);
+    const again = await installSkillsAfterGlobalNpmInstall({ global: true, home, env: {}, mode: "copy" });
+    assert.equal(again.targets.find(item => item.agent === "sealseek").unchanged, true);
+    assert.equal(again.ok, true);
+  } finally { await fs.rm(home, { recursive: true, force: true }); }
+});
+
+test("installer reports an unresolved unmanaged target without changing it", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "restyler-postinstall-unmanaged-"));
+  const sealseek = path.join(home, ".sealseek", "workspace", "skills", "reference-style-restyler");
+  try {
+    await fs.mkdir(sealseek, { recursive: true });
+    await fs.writeFile(path.join(sealseek, "SKILL.md"), "user-owned\n", { flag: "wx" });
+    const result = await installSkillsAfterGlobalNpmInstall({ global: true, home, env: { SEALSEEK_HOME: path.join(home, ".sealseek") }, mode: "copy" });
+    assert.equal(result.ok, false);
+    assert.equal(result.targets[0].skipped, "unmanaged-skill");
+    assert.equal(await fs.readFile(path.join(sealseek, "SKILL.md"), "utf8"), "user-owned\n");
+  } finally { await fs.rm(home, { recursive: true, force: true }); }
 });

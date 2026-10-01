@@ -6,6 +6,7 @@ import { presetList, presetShow, presetValidate } from "./presets.mjs";
 import { matchCanvas } from "./canvas.mjs";
 import { skillSource, skillStatus, skillInstall, skillRefreshManaged } from "./skill-manager.mjs";
 import { autoUpdateOnStart, checkUpdate, globalInstallInfo, installUpdate } from "./update.mjs";
+import { installSkillsAfterGlobalNpmInstall } from "./install-lifecycle.mjs";
 
 const HELP = `reference-style-restyler ${PACKAGE.version}
 
@@ -13,6 +14,7 @@ Commands:
   doctor --json
   capabilities --json
   adapter status --platform codex|sealseek --json
+  setup [--json]
   preset list|show <id>|validate [id] [--json]
   canvas match --input FILE --generated FILE --output FILE [--mode cover|contain] [--json]
   skill source|status|install|update [--agent auto|all|codex|sealseek] [--adopt] [--mode auto|link|copy] [--json]
@@ -32,6 +34,14 @@ export async function dispatch(args) {
   const json = args.includes("--json");
   if (!command || command === "help" || command === "--help" || command === "-h") return print(HELP, false);
   if (command === "version" || command === "--version") return print(PACKAGE.version, false);
+  if (command === "setup") {
+    const location = await globalInstallInfo();
+    if (!location.installed) throw new CliError("SOURCE_CHECKOUT", "Setup requires a global npm installation of this package.");
+    const result = await installSkillsAfterGlobalNpmInstall({ global: true });
+    print(result, json);
+    if (!result.ok) process.exitCode = 1;
+    return;
+  }
   if (command === "capabilities") return print(JSON.parse(await fs.readFile(path.join(SKILL_SOURCE, "capabilities.json"), "utf8")), json);
   if (command === "adapter" && action === "status") {
     const platform = option(args, "--platform");

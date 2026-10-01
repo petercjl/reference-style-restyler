@@ -6,11 +6,11 @@ An npm-distributed, preset-based raster restyling Skill for Codex and SealSeek. 
 
 ```bash
 npm install -g @petercjl/reference-style-restyler
+reference-style-restyler setup --json
 reference-style-restyler doctor --json
-reference-style-restyler skill install --agent sealseek --json
 ```
 
-For Codex, use `--agent codex`. An existing unmanaged Skill is never replaced implicitly; review it first, then use `--adopt` to retain a timestamped backup.
+For an Agent given the request “install `@petercjl/reference-style-restyler`”, these commands are the package's installation contract. The user only needs to give the package name. Global installation uses npm's `latest` stable release. Its postinstall hook installs the bundled Skill into detected Agent roots when npm permits package scripts; `setup` performs and verifies that same action explicitly and is safe to repeat when scripts are blocked. When both Codex and SealSeek roots exist without an explicit active root, it checks both. An existing unmanaged Skill is never replaced implicitly; review it first, then use `reference-style-restyler skill install --agent sealseek --adopt --json` to retain a timestamped backup. Use `--agent codex` for a Codex target.
 
 ## Updates
 
