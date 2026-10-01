@@ -4,6 +4,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import sharp from "sharp";
+import semver from "semver";
+import { PACKAGE } from "../src/context.mjs";
 import { presetList, presetShow, presetValidate } from "../src/presets.mjs";
 import { matchCanvas } from "../src/canvas.mjs";
 import { skillInstall, skillStatus, skillRefreshManaged } from "../src/skill-manager.mjs";
@@ -71,7 +73,8 @@ test("managed copy is repaired without touching a separate unmanaged target", as
 test("registry check detects a newer stable version without installing", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "restyler-update-"));
   try {
-    const result = await checkUpdate({ force: true, cache: path.join(dir, "update.json"), fetchImpl: async () => ({ ok: true, json: async () => ({ "dist-tags": { latest: "0.1.1" } }) }) });
+    const nextVersion = semver.inc(PACKAGE.version, "patch");
+    const result = await checkUpdate({ force: true, cache: path.join(dir, "update.json"), fetchImpl: async () => ({ ok: true, json: async () => ({ "dist-tags": { latest: nextVersion } }) }) });
     assert.equal(result.updateAvailable, true);
     const cached = await checkUpdate({ cache: path.join(dir, "update.json"), fetchImpl: async () => { throw new Error("should use cache"); } });
     assert.equal(cached.cached, true);
