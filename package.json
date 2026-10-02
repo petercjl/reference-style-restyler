@@ -1,6 +1,6 @@
 {
   "name": "@petercjl/reference-style-restyler",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Portable preset-based image restyling Skill for Codex and SealSeek",
   "type": "module",
   "bin": {
