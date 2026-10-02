@@ -95,7 +95,7 @@ export async function dispatch(args) {
     const source = await skillSource();
     const global = await globalInstallInfo();
     const status = await skillStatus("auto");
-    const result = { ok: preset.ok && source.ok, package: PACKAGE.name, version: PACKAGE.version, node: process.version, globalInstall: global.installed, preset, skill: status };
+    const result = { ok: preset.ok && source.ok && status.ok, package: PACKAGE.name, version: PACKAGE.version, node: process.version, globalInstall: global.installed, preset, skill: status };
     print(result, json);
     if (!result.ok) process.exitCode = 1;
     return;

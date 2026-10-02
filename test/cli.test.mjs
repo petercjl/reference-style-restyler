@@ -3,13 +3,14 @@ import { test } from "node:test";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import sharp from "sharp";
 import semver from "semver";
 import { PACKAGE } from "../src/context.mjs";
 import { presetList, presetShow, presetValidate } from "../src/presets.mjs";
 import { matchCanvas } from "../src/canvas.mjs";
 import { skillInstall, skillStatus, skillRefreshManaged } from "../src/skill-manager.mjs";
-import { checkUpdate } from "../src/update.mjs";
+import { checkUpdate, npmRuntime } from "../src/update.mjs";
 import { installSkillsAfterGlobalNpmInstall } from "../src/install-lifecycle.mjs";
 
 test("default preset and all six reference images validate", async () => {
@@ -114,5 +115,124 @@ test("installer reports an unresolved unmanaged target without changing it", asy
     assert.equal(result.ok, false);
     assert.equal(result.targets[0].skipped, "unmanaged-skill");
     assert.equal(await fs.readFile(path.join(sealseek, "SKILL.md"), "utf8"), "user-owned\n");
+  } finally { await fs.rm(home, { recursive: true, force: true }); }
+});
+
+test("status and doctor fail when no Agent Skill is installed", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "restyler-doctor-"));
+  try {
+    const status = await skillStatus("auto", { home, env: {} });
+    assert.equal(status.ok, false);
+    assert.equal(status.targets.length, 0);
+    const result = spawnSync(process.execPath, [path.resolve("bin/reference-style-restyler.mjs"), "doctor", "--json"], {
+      encoding: "utf8", env: { ...process.env, CODEX_HOME: path.join(home, ".codex"), SEALSEEK_HOME: path.join(home, ".sealseek") },
+    });
+    assert.equal(result.status, 1);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.ok, false);
+    assert.equal(report.skill.ok, false);
+  } finally { await fs.rm(home, { recursive: true, force: true }); }
+});
+
+test("doctor accepts a healthy SealSeek install beside an unmanaged Codex Skill", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "restyler-doctor-mixed-"));
+  const codex = path.join(home, ".codex", "skills", "reference-style-restyler");
+  try {
+    await fs.mkdir(codex, { recursive: true });
+    await fs.writeFile(path.join(codex, "SKILL.md"), "user-owned\n");
+    await skillInstall("sealseek", { home, env: {}, mode: "copy" });
+    const status = await skillStatus("auto", { home, env: {} });
+    assert.equal(status.ok, true);
+    assert.equal(status.targets.find(item => item.agent === "codex").managed, false);
+    assert.equal(status.targets.find(item => item.agent === "sealseek").current, true);
+  } finally { await fs.rm(home, { recursive: true, force: true }); }
+});
+
+test("copy update preserves customized UI metadata with a recoverable backup", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "restyler-ui-"));
+  const target = path.join(home, ".sealseek", "workspace", "skills", "reference-style-restyler");
+  try {
+    await skillInstall("sealseek", { home, env: {}, mode: "copy" });
+    const ui = path.join(target, "agents", "openai.yaml");
+    assert.match(await fs.readFile(ui, "utf8"), /default_prompt:/);
+    await fs.appendFile(ui, "\n# Customized display metadata\n");
+    const before = await fs.readFile(ui, "utf8");
+    await fs.appendFile(path.join(target, "SKILL.md"), "\nlocal drift\n");
+    const result = await skillInstall("sealseek", { home, env: {}, mode: "copy" });
+    assert.equal(result.ok, true);
+    assert.ok(result.targets[0].backup);
+    assert.equal(await fs.readFile(ui, "utf8"), before);
+    assert.equal((await skillStatus("sealseek", { home, env: {} })).ok, true);
+  } finally { await fs.rm(home, { recursive: true, force: true }); }
+});
+
+test("managed copy refreshes a changed canonical default prompt", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "restyler-ui-migration-"));
+  const target = path.join(home, ".sealseek", "workspace", "skills", "reference-style-restyler");
+  try {
+    await skillInstall("sealseek", { home, env: {}, mode: "copy" });
+    const ui = path.join(target, "agents", "openai.yaml");
+    const manifestPath = path.join(target, ".reference-style-restyler-install.json");
+    await fs.writeFile(ui, 'interface:\n  default_prompt: "Use $reference-style-restyler to restyle this image with the default preset while preserving its composition and aspect ratio."\n');
+    const oldManifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
+    oldManifest.schemaVersion = 1;
+    oldManifest.sourceHash = "previous-package-source";
+    delete oldManifest.uiSourceHash;
+    await fs.writeFile(manifestPath, JSON.stringify(oldManifest));
+    assert.equal((await skillStatus("sealseek", { home, env: {} })).ok, false);
+    await skillInstall("sealseek", { home, env: {}, mode: "copy" });
+    assert.match(await fs.readFile(ui, "utf8"), /functional-island preset/);
+    assert.equal((await skillStatus("sealseek", { home, env: {} })).ok, true);
+  } finally { await fs.rm(home, { recursive: true, force: true }); }
+});
+
+test("locked directory rename uses backed-up in-place sync", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "restyler-locked-"));
+  const target = path.join(home, ".sealseek", "workspace", "skills", "reference-style-restyler");
+  try {
+    await skillInstall("sealseek", { home, env: {}, mode: "copy" });
+    await fs.appendFile(path.join(target, "SKILL.md"), "\nlocal drift\n");
+    const result = await skillInstall("sealseek", { home, env: {}, mode: "copy", rename: async (from, to) => {
+      if (from === target) throw Object.assign(new Error("directory locked"), { code: "EBUSY" });
+      return fs.rename(from, to);
+    } });
+    assert.equal(result.ok, true);
+    assert.equal(result.targets[0].mode, "copy-in-place");
+    assert.match(await fs.readFile(path.join(result.targets[0].backup, "SKILL.md"), "utf8"), /local drift/);
+    assert.equal((await skillStatus("sealseek", { home, env: {} })).ok, true);
+  } finally { await fs.rm(home, { recursive: true, force: true }); }
+});
+
+test("Windows Agent-managed runtime is discovered without an override", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "restyler-managed-runtime-"));
+  try {
+    const installPath = path.join(home, "managed-node");
+    const node = path.join(installPath, "node.exe");
+    const npmCli = path.join(installPath, "node_modules", "npm", "bin", "npm-cli.js");
+    await fs.mkdir(path.dirname(npmCli), { recursive: true });
+    await fs.mkdir(path.join(home, ".sealseek", "binaries"), { recursive: true });
+    await fs.writeFile(node, "node");
+    await fs.writeFile(npmCli, "npm");
+    await fs.writeFile(path.join(home, ".sealseek", "binaries", "runtime-info.json"), JSON.stringify({ node: { executablePath: node, installPath, npmGlobalDir: path.join(home, "global") } }));
+    const runtime = await npmRuntime({ home, platform: "win32" });
+    assert.equal(runtime.executable, node);
+    assert.deepEqual(runtime.argsPrefix, [npmCli]);
+    assert.equal(runtime.shell, false);
+  } finally { await fs.rm(home, { recursive: true, force: true }); }
+});
+
+test("failed staged update restores the prior managed Skill", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "restyler-rollback-"));
+  const target = path.join(home, ".sealseek", "workspace", "skills", "reference-style-restyler");
+  try {
+    await skillInstall("sealseek", { home, env: {}, mode: "copy" });
+    const skillFile = path.join(target, "SKILL.md");
+    await fs.appendFile(skillFile, "\nlocal drift\n");
+    const previous = await fs.readFile(skillFile, "utf8");
+    await assert.rejects(skillInstall("sealseek", { home, env: {}, mode: "copy", rename: async (from, to) => {
+      if (from.includes(".stage-")) throw Object.assign(new Error("staged promotion failed"), { code: "EIO" });
+      return fs.rename(from, to);
+    } }), /staged promotion failed/);
+    assert.equal(await fs.readFile(skillFile, "utf8"), previous);
   } finally { await fs.rm(home, { recursive: true, force: true }); }
 });

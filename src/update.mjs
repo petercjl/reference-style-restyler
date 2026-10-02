@@ -69,7 +69,7 @@ function run(executable, args, { env = process.env, shell = false } = {}) {
   });
 }
 
-async function npmRuntime({ home = os.homedir(), platform = process.platform } = {}) {
+export async function npmRuntime({ home = os.homedir(), platform = process.platform } = {}) {
   if (platform === "win32") {
     const infoPath = path.join(home, ".sealseek", "binaries", "runtime-info.json");
     try {
